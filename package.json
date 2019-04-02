@@ -1,0 +1,28 @@
+{
+  "name": "approval",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "dependencies": {
+    "ejs": "^2.6.1",
+    "express": "^4.16.4",
+    "morgan": "^1.9.1",
+    "request": "^2.88.0"
+  },
+  "devDependencies": {
+    "nodemon": "^1.18.10"
+  },
+  "scripts": {
+    "start": "nodemon ./server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/panderosa/approval.git"
+  },
+  "author": "Dariusz Malinowski",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/panderosa/approval/issues"
+  },
+  "homepage": "https://github.com/panderosa/approval#readme"
+}
