@@ -4,15 +4,15 @@ const path = require('path');
 const fs = require('fs');
 const app = express();
 const morgan = require('morgan');
-const requestsRouter = require('./routes/requests.js');
+const bodyParser = require('body-parser');
+
 const csa = require('./csa.js');
 
 
-const PORT = 3333;
 const SSL_PORT = 3334;
 const tlsOptions = {
-    key: fs.readFileSync(path.join('data/key.pem')),
-    cert: fs.readFileSync(path.join('data/certificate.pem'))
+    key: fs.readFileSync(path.join('data/dada_key.pem')),
+    cert: fs.readFileSync(path.join('data/dada.pem'))
 };
 
 buildUrl = (version, area) => `/api/${version}/${area}`;
@@ -21,15 +21,28 @@ console.log(REQUESTS_BASE_URL);
 
 
 app.use(morgan('tiny'));
+app.use(bodyParser.urlencoded({extended: true}));
+
 app.set("view engine", "ejs");
 app.set("views", path.join("views"));
-app.use(REQUESTS_BASE_URL, requestsRouter);
 
 app.get('/', (req, res) => {
     res.send("HTTP Test Passed");
 });
 
-
+app.post('/validateCertificates', (req,res) => {
+    var dirPslab = process.env.PSLABCERT;
+    var certsEncoded = req.body.certificates;
+    var certs = decodeURIComponent(certsEncoded);
+    fs.writeFileSync(path.join(dirPslab,'certificateNJEncoded.crt'),certsEncoded);
+    fs.writeFileSync(path.join(dirPslab,'certificateNJ.crt'),certs);
+    var validation = {
+        'status': 'OK',
+        'message': 'review certificateNJ Files'
+    }
+    res.json(validation);
+    res.sendStatus(200);
+});
 
 
 app.get('/catalog/:catalogId/request/:requestId', async (req, res) => {
@@ -50,15 +63,6 @@ app.get('/catalog/:catalogId/request/:requestId', async (req, res) => {
     }
 });
 
-/*app.get('/catalog/:catalogId/request/:requestId', (req, res) => {
-    var requestId = req.params.requestId;
-    var catalogId = req.params.catalogId;
-    var out = csa.getRequestDetails(catalogId, requestId)
-        .then(order => resolve({ order: order }))
-        .then(options => res.render('request', options))
-        .catch(err => res.send(err));
-    console.log(out);
-});*/
 
 
 https.createServer(tlsOptions, app).listen(SSL_PORT, () => console.log(`Starting HTTPS server at port ${SSL_PORT}`));
