@@ -5,6 +5,7 @@ const fs = require('fs');
 const app = express();
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
+const exec = require('child_process').exec;
 
 const csa = require('./csa.js');
 
@@ -21,7 +22,7 @@ console.log(REQUESTS_BASE_URL);
 
 
 app.use(morgan('tiny'));
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.set("view engine", "ejs");
 app.set("views", path.join("views"));
@@ -30,18 +31,42 @@ app.get('/', (req, res) => {
     res.send("HTTP Test Passed");
 });
 
-app.post('/validateCertificates', (req,res) => {
-    var dirPslab = ( process.env.PSLABCERT )? process.env.PSLABCERT: (process.platform === "win32")? 'c:/tmp': '/tmp';
-    var certsEncoded = req.body.certificates;
-    var certs = decodeURIComponent(certsEncoded);
-    fs.writeFileSync(path.join(dirPslab,'certificateNJEncoded.crt'),certsEncoded);
-    fs.writeFileSync(path.join(dirPslab,'certificateNJ.crt'),certs);
-    var validation = {
-        'status': 'OK',
-        'message': 'review certificateNJ Files'
+app.post('/validateCertificates', async (req, res) => {
+    var validation;
+    try {
+        var dirPslab = (process.env.PSLABCERT) ? process.env.PSLABCERT : (process.platform === "win32") ? 'c:/tmp' : '/tmp';
+        var certs = req.body.certificates;
+        var file = path.join(dirPslab, 'certificates.crt');
+        fs.writeFileSync(file, certs);
+        validation = await runValidation(file);
+    }
+    catch (error) {
+        console.log(`ERROR: ${error}`);
+        validation = {
+            'status': 'ERROR',
+            'message': error
+        }
     }
     res.json(validation);
 });
+
+async function runValidation(file) {
+    return new Promise((resolve, reject) => {
+        var runscript = exec(`cmd /c c:/OpenSSH-Win64/ssh-keygen -l -v -f ${file}`, (error, stdout, stderr) => {
+            if (error) {
+                reject(error);
+            }
+            else {
+                console.log(`STDOUT: ${stdout}`);
+                console.log(`STDERR: ${stderr}`);
+                resolve({
+                    'status': 'OK',
+                    'message': 'Validation Passed'
+                });
+            }
+        });
+    });
+}
 
 
 app.get('/catalog/:catalogId/request/:requestId', async (req, res) => {
