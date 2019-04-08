@@ -36,7 +36,7 @@ app.post('/validateCertificates', async (req, res) => {
     try {
         var dirPslab = (process.env.PSLABCERT) ? process.env.PSLABCERT : (process.platform === "win32") ? 'c:/tmp' : '/tmp';
         var certs = req.body.certificates;
-        var file = path.join(dirPslab, 'certificates.crt');
+        var file = path.join(dirPslab, `tmp_${Date.now()}.crt`);
         fs.writeFileSync(file, certs);
         validation = await runValidation(file);
     }
@@ -44,7 +44,7 @@ app.post('/validateCertificates', async (req, res) => {
         console.log(`ERROR: ${error}`);
         validation = {
             'status': 'ERROR',
-            'message': `${error}`
+            'message': 'Key Validation Failed'
         }
     }
     res.json(validation);
@@ -61,7 +61,7 @@ async function runValidation(file) {
                 console.log(`STDERR: ${stderr}`);
                 resolve({
                     'status': 'OK',
-                    'message': 'Validation Passed'
+                    'message': 'Key Validation Passed'
                 });
             }
         });
