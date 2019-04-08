@@ -31,7 +31,7 @@ app.get('/', (req, res) => {
 });
 
 app.post('/validateCertificates', (req,res) => {
-    var dirPslab = process.env.PSLABCERT;
+    var dirPslab = ( process.env.PSLABCERT )? process.env.PSLABCERT: (process.platform === "win32")? 'c:/tmp': '/tmp';
     var certsEncoded = req.body.certificates;
     var certs = decodeURIComponent(certsEncoded);
     fs.writeFileSync(path.join(dirPslab,'certificateNJEncoded.crt'),certsEncoded);
@@ -41,7 +41,6 @@ app.post('/validateCertificates', (req,res) => {
         'message': 'review certificateNJ Files'
     }
     res.json(validation);
-    res.sendStatus(200);
 });
 
 
