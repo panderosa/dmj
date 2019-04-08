@@ -52,7 +52,7 @@ app.post('/validateCertificates', async (req, res) => {
 
 async function runValidation(file) {
     return new Promise((resolve, reject) => {
-        var runscript = exec(`cmd /c c:/OpenSSH-Win64/ssh-keygen -l -v -f ${file}`, (error, stdout, stderr) => {
+        var runscript = exec(`ssh-keygen -l -v -f ${file}`, (error, stdout, stderr) => {
             if (error) {
                 reject(error);
             }
