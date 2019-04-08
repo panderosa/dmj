@@ -44,7 +44,7 @@ app.post('/validateCertificates', async (req, res) => {
         console.log(`ERROR: ${error}`);
         validation = {
             'status': 'ERROR',
-            'message': error
+            'message': `${error}`
         }
     }
     res.json(validation);
