@@ -27,11 +27,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 app.set("views", path.join("views"));
 
-app.get('/', (req, res) => {
-    res.send("HTTP Test Passed");
+app.get('/approval', (req, res) => {
+    res.send("HTTP Hello Test Passed");
 });
 
-app.post('/validateCertificates', async (req, res) => {
+// Validate OpenSSH public keys
+app.post('/approval/validateCertificates', async (req, res) => {
     var validation;
     try {
         var dirPslab = (process.env.PSLABCERT) ? process.env.PSLABCERT : (process.platform === "win32") ? 'c:/tmp' : '/tmp';
