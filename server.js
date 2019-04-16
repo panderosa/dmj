@@ -9,11 +9,13 @@ const exec = require('child_process').exec;
 
 const csa = require('./csa.js');
 
+var KEY = process.env.KEY;
+var CERT = process.env.CERT;
 
 const SSL_PORT = 3334;
 const tlsOptions = {
-    key: fs.readFileSync(path.join('data/dada_key.pem')),
-    cert: fs.readFileSync(path.join('data/dada.pem'))
+    key: fs.readFileSync(path.join(`data/${KEY}`)),
+    cert: fs.readFileSync(path.join(`data/${CERT}`))
 };
 
 buildUrl = (version, area) => `/api/${version}/${area}`;
@@ -29,6 +31,11 @@ app.set("views", path.join("views"));
 
 app.get('/approval', (req, res) => {
     res.send("HTTP Hello Test Passed");
+});
+
+app.get('/approval/validateCertificates', (req,res) => {
+    console.log(`GET ${req.originalUrl}`);
+    res.render('validate');
 });
 
 // Validate OpenSSH public keys
