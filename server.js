@@ -8,6 +8,7 @@ const bodyParser = require('body-parser');
 const exec = require('child_process').exec;
 const csa = require('./csa.js');
 
+
 const SSL_PORT = 3334;
 // Create secrets
 const tlsOptions = {
@@ -15,8 +16,13 @@ const tlsOptions = {
     cert: fs.readFileSync(path.join(`secrets/server.pem`))
 };
 
+app.use('/approval/static', express.static('./public'));
 
 app.use(morgan('tiny'));
+// support parsing of application/json type post data
+app.use(bodyParser.json());
+
+//support parsing of application/x-www-form-urlencoded post data
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.set("view engine", "ejs");
@@ -27,12 +33,38 @@ app.get('/approval', (req, res) => {
 });
 
 
-app.get('/approval/javascriptstore', async (req,res) => {
+app.get('/approval/javascriptstore', async (req, res) => {
     var data = await csa.listScripts();
-    res.render('javascriptstore',{data: data});
+    res.render('javascriptstore', { data: data, baseUrl: 'https://luca.koty.pl:3334/approval/javascriptstore' });
 });
 
-app.get('/approval/validateCertificates', (req,res) => {
+app.post('/approval/javascriptstore/update/:scriptName', async (req, res) => {
+    try {
+        console.log('initiated');
+        var scriptName = req.params.scriptName;
+        var content = req.body.content;
+        fs.writeFileSync(path.join('c:/temp/update.js'),content);
+        res.status(200).send('OK');
+    }
+    catch (error) {
+        res.status(500).send(error);
+    }
+});
+
+app.get('/approval/javascriptstore/:scriptName', async (req, res) => {
+    try {
+        var scriptName = req.params.scriptName;
+        var scriptBody = await csa.getScript(scriptName);
+        res.send(scriptBody);
+    }
+    catch (error) {
+        res.status(500).send(error);
+    }
+});
+
+
+
+app.get('/approval/validateCertificates', (req, res) => {
     res.render('validate');
 });
 
@@ -73,6 +105,8 @@ async function runValidation(file) {
         });
     });
 }
+
+//app.listen(3333,() => console.log("Starting server at port 3333"));
 
 https.createServer(tlsOptions, app).listen(SSL_PORT, () => console.log(`Starting HTTPS server at port ${SSL_PORT}`));
 

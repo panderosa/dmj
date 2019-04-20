@@ -65,6 +65,42 @@ listScripts = async () => {
     return await sendRequest(options);
 }
 
+getScript = async (scriptName) => {
+    var snm = encodeURIComponent(scriptName);
+    var url = env.uri.api + `/javascriptstore/${snm}`;
+    var auth = getBasicAuth('admin', env.csa.admin);
+    var options = {
+        url: url,
+        rejectUnauthorized: false,
+        method: "GET",
+        headers: {
+            "Authorization": auth
+        }
+    };
+
+    return await sendRequest(options);
+}
+
+updateScript = async (scriptName) => {
+    var snm = encodeURIComponent(scriptName);
+    var url = env.uri.api + `/javascriptstore/${snm}`;
+    var auth = getBasicAuth('admin', env.csa.admin);
+    var options = {
+        url: url,
+        rejectUnauthorized: false,
+        method: "POST",
+        headers: {
+            "Authorization": auth
+        }
+    };
+
+    return await sendRequest(options);
+}
+
+
+
 module.exports = {
-    listScripts
+    listScripts,
+    getScript,
+    env
 }
