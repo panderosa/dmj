@@ -5,9 +5,11 @@ const fs = require('fs');
 const app = express();
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
+const multer = require('multer');
 const exec = require('child_process').exec;
 const csa = require('./csa.js');
-
+var upload = multer({});
+const atob = require('atob');
 
 const SSL_PORT = 3334;
 // Create secrets
@@ -25,6 +27,7 @@ app.use(bodyParser.json());
 //support parsing of application/x-www-form-urlencoded post data
 app.use(bodyParser.urlencoded({ extended: true }));
 
+
 app.set("view engine", "ejs");
 app.set("views", path.join("views"));
 
@@ -34,22 +37,38 @@ app.get('/approval', (req, res) => {
 
 
 app.get('/approval/javascriptstore', async (req, res) => {
-    var data = await csa.listScripts();
-    res.render('javascriptstore', { data: data, baseUrl: 'https://luca.koty.pl:3334/approval/javascriptstore' });
-});
-
-app.post('/approval/javascriptstore/update/:scriptName', async (req, res) => {
     try {
-        console.log('initiated');
-        var scriptName = req.params.scriptName;
-        var content = req.body.content;
-        fs.writeFileSync(path.join('c:/temp/update.js'),content);
-        res.status(200).send('OK');
+        var data = await csa.listScripts();
+        res.render('javascriptstore', { data: data, baseUrl: 'https://luca.koty.pl:3334/approval/javascriptstore' });
     }
     catch (error) {
         res.status(500).send(error);
     }
 });
+
+
+app.get('/approval/javascriptstore/update', (req, res) => {
+    res.render('upload');
+});
+
+// multipart/form-data processed by multer
+app.post('/approval/javascriptstore/update', upload.single('script'), async (req, res) => {
+    try {
+        var scriptName = req.body.scriptName;
+        console.log(`Script Name: ${scriptName}`)
+        console.log(req.file);
+        var buffer = req.file.buffer;        
+        fs.writeFileSync(`c:/tmp/output_${scriptName}`, buffer);
+        var out = await csa.updateScript(req.body.scriptName,buffer);
+        res.status(200).send('out');
+    }
+    catch (error) {
+        console.log("ERROR: " + error);
+        res.status(500).send(error);
+    }
+});
+
+
 
 app.get('/approval/javascriptstore/:scriptName', async (req, res) => {
     try {

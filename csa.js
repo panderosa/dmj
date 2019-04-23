@@ -28,7 +28,7 @@ sendRequest = async (options) => {
 }
 
 
- getUserIdentifier = async (tenant, user) => {
+getUserIdentifier = async (tenant, user) => {
     var url = env.uri.rest + `/${tenant}/${user}`;
     var auth = getBasicAuth('csaTransportUser', env.csa.csaTransportUser);
     var options = {
@@ -81,20 +81,28 @@ getScript = async (scriptName) => {
     return await sendRequest(options);
 }
 
-updateScript = async (scriptName) => {
-    var snm = encodeURIComponent(scriptName);
-    var url = env.uri.api + `/javascriptstore/${snm}`;
+updateScript = async (scriptName, buffer) => {
+    var url = env.uri.api + '/javascriptstore?overwrite=true';
     var auth = getBasicAuth('admin', env.csa.admin);
+
+    var formData = {
+        name: scriptName,
+        file: buffer
+    };
+
     var options = {
         url: url,
         rejectUnauthorized: false,
         method: "POST",
+        formData: formData,
         headers: {
+            "Accept": "application/json",
             "Authorization": auth
         }
     };
-
+    
     return await sendRequest(options);
+
 }
 
 
@@ -102,5 +110,6 @@ updateScript = async (scriptName) => {
 module.exports = {
     listScripts,
     getScript,
+    updateScript,
     env
 }

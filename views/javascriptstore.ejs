@@ -111,44 +111,58 @@
                 //window.location.href = 'static/loadme.html';
             });
 
+
+
             $('.updateFile').change(function () {
-                var myFile = $(this).prop('files')[0];
-                var scriptName = myFile.name;
-                var reader = new FileReader();
-                reader.onload = function () {
-                    var content = encodeURIComponent(this.result);
-                    var payload = `content=${content}`;
-                    var httpRequest = new XMLHttpRequest();
-                    httpRequest.onreadystatechange = function () {
-                        if (httpRequest.readyState === XMLHttpRequest.DONE && httpRequest.status === 200) {
-                            alert("uploaded");
-                        }
-                        else if (httpRequest.readyState === XMLHttpRequest.DONE && httpRequest.status !== 200) {
-                            alert(`Status Code: ${httpRequest.status}\n Status Text: ${httpRequest.statusText}`)
-                        }
-                    };
-                    httpRequest.open('POST', baseUrl + `/update/${scriptName}`, true);
-                    httpRequest.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-                    httpRequest.send(payload);
-                }
-                reader.readAsText(myFile);
+                var currow = $(this).closest('tr');
+                var scriptName = currow.find('td:eq(0)').text();
+                var formData = new FormData();
+                var blob = this.files[0];
+                
+                formData.append('scriptName', scriptName);
+                formData.append('script', blob);
+
+                var httpRequest = new XMLHttpRequest();
+                httpRequest.onreadystatechange = function () {
+                    if (httpRequest.readyState === XMLHttpRequest.DONE && httpRequest.status === 200) {
+                        alert("uploaded");
+                    }
+                    else if (httpRequest.readyState === XMLHttpRequest.DONE && httpRequest.status !== 200) {
+                        alert(`Status Code: ${httpRequest.status}\n Status Text: ${httpRequest.statusText}\n Message: ${httpRequest.responseText}`)
+                    }
+                };
+                httpRequest.open('POST', baseUrl + '/update', true);
+                httpRequest.send(formData);
+
             });
+
+            function arrayBufferToBase64(buffer) {
+                var binary = '';
+                var bytes = new Uint8Array(buffer);
+                var len = bytes.byteLength;
+                for (var i = 0; i < len; i++) {
+                    binary += String.fromCharCode(bytes[i]);
+                }
+                return btoa(binary);
+            }
 
             // update
             $('.btn.update').click(function () {
-                var currow = $(this).closest('tr');
-                var scriptName = currow.find('td:eq(0)').text();
                 $myInput = $(this).closest('td').children('div:eq(0)').children('input:eq(0)')
                 $myInput.trigger('click');
             });
-
-            function checkStatus(myWindow, myTitle) {
-                if (myWindow.document) {
-                    myWindow.document.title = myTitle;
-                }
-                else {
-                    setTimeout(checkStatus, 10);
-                }
+            //
+            function formMultipart(fileName, content) {
+                var body = `--${BOUNDARY}
+Content-Disposition: form-data; name=\"script\"; filename=\"${fileName}\"
+Content-Type: application/javascript
+    
+    
+${content}
+    
+--${BOUNDARY}--
+`;
+                return body;
             }
 
         });
