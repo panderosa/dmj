@@ -46,20 +46,20 @@ app.get('/approval/javascriptstore', async (req, res) => {
     }
 });
 
-
+// testing form in browser
 app.get('/approval/javascriptstore/update', (req, res) => {
     res.render('upload');
 });
 
 // multipart/form-data processed by multer
-app.post('/approval/javascriptstore/update', upload.single('script'), async (req, res) => {
+app.post('/approval/javascriptstore/upload', upload.single('script'), async (req, res) => {
     try {
-        var scriptName = req.body.scriptName;
-        console.log(`Script Name: ${scriptName}`)
-        console.log(req.file);
-        var buffer = req.file.buffer;        
-        fs.writeFileSync(`c:/tmp/output_${scriptName}`, buffer);
-        var out = await csa.updateScript(req.body.scriptName,buffer);
+        var scriptName = req.body.scriptName || req.file.originalname;
+        var overwrite = ( req.body.scriptName )? 'true': 'false';
+        var buffer = req.file.buffer; 
+        console.log(req.file);     
+        //fs.writeFileSync(`c:/tmp/output_${scriptName}`, buffer);
+        var out = await csa.updateScript(buffer,scriptName,overwrite);
         res.status(200).send('out');
     }
     catch (error) {
@@ -68,7 +68,16 @@ app.post('/approval/javascriptstore/update', upload.single('script'), async (req
     }
 });
 
-
+app.delete('/approval/javascriptstore/:scriptName', async (req, res) => {
+    try {
+        var scriptName = req.params.scriptName;
+        var scriptBody = await csa.removeScript(scriptName);
+        res.send(scriptBody);
+    }
+    catch (error) {
+        res.status(500).send(error);
+    }
+});
 
 app.get('/approval/javascriptstore/:scriptName', async (req, res) => {
     try {

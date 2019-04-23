@@ -23,6 +23,10 @@
             padding: 10px;
         }
 
+        .active {
+            background-color: #D8DA5C
+        }
+
         .table th {
             height: 25px;
             background-color: black;
@@ -53,29 +57,30 @@
         <table class="table" id="scroll-within-div">
             <thead>
                 <tr>
+                    <th colspan="3">
+                        <div class="hiddenfile">
+                            <input name="upload" type="file" class="uploadFile" accept=".js" />
+                        </div>
+                        <button type="button" class="btn view">View Script</button>
+                        <button type="button" class="btn update">Update Script</button>
+                        <button type="button" class="btn remove">Remove Script</button>
+                        <button type="button" class="btn new">New Script</button>
+                        <button type="button" class="btn refresh">Refresh Page</button>
+                    </th>
+                </tr>
+                <tr>
                     <th>Name</th>
                     <th>Modified At</th>
                     <th>Length in Bytes</th>
-                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
-                <% 
-                
+                <%                
                 data.members.sort((a,b) => (a.name < b.name)? -1: (a.name > b.name)? 1: 0).forEach(i => { %>
-
                 <tr>
                     <td class="text-center"><%= i.name %></td>
                     <td class="text-center"><%= i['@modified'] %></td>
                     <td class="text-center"><%= i['@content_length'] %></td>
-                    <td class="text-center">
-                        <div class="hiddenfile">
-                            <input name="upload" type="file" class="updateFile" />
-                        </div>
-                        <button type="button" class="btn get">Get</button>
-                        <button type="button" class="btn update">Update</button>
-                        <button type="button" class="btn remove">Remove</button>
-                    </td>
                 </tr>
                 <% }); %>
             </tbody>
@@ -86,40 +91,81 @@
     <script>
         $(document).ready(() => {
             const baseUrl = '<%= baseUrl%>';
+            let activeRow;
+            let overwrite; // true for updating or false for new
             // scroll table
             $('#scroll-within-div').floatThead({});
 
-            // display
-            $('.btn.get').click(function () {
-                var currow = $(this).closest('tr');
-                var scriptName = currow.find('td:eq(0)').text();
-                var httpRequest = new XMLHttpRequest();
-                httpRequest.onreadystatechange = function () {
-                    if (httpRequest.readyState === XMLHttpRequest.DONE && httpRequest.status === 200) {
-                        var scriptText = httpRequest.responseText;
-                        var scriptWindow = window.open(scriptName, '_blank', 'height=900,width=600');
-                        var scriptDocument = scriptWindow.document;
-                        var scriptHTML = scriptText.replace(/\n/g, '<br/>');
-                        scriptDocument.writeln(scriptHTML);
-                    }
-                    else if (httpRequest.readyState === XMLHttpRequest.DONE && httpRequest.status !== 200) {
-                        alert(`Status Code: ${httpRequest.status}\n Status Text: ${httpRequest.statusText}`)
-                    }
-                };
-                httpRequest.open('GET', baseUrl + `/${scriptName}`, true);
-                httpRequest.send();
-                //window.location.href = 'static/loadme.html';
+            // View Script
+            $('.btn.view').click(function () {
+                if (activeRow) {
+                    var scriptName = activeRow.find('td:eq(0)').text();
+                    var httpRequest = new XMLHttpRequest();
+                    httpRequest.onreadystatechange = function () {
+                        if (httpRequest.readyState === XMLHttpRequest.DONE && httpRequest.status === 200) {
+                            var scriptText = httpRequest.responseText;
+                            var scriptWindow = window.open(scriptName, '_blank', 'height=900,width=600');
+                            var scriptDocument = scriptWindow.document;
+                            var scriptHTML = scriptText.replace(/\n/g, '<br/>');
+                            scriptDocument.writeln(scriptHTML);
+                        }
+                        else if (httpRequest.readyState === XMLHttpRequest.DONE && httpRequest.status !== 200) {
+                            alert(`Status Code: ${httpRequest.status}\n Status Text: ${httpRequest.statusText}`)
+                        }
+                    };
+                    httpRequest.open('GET', baseUrl + `/${scriptName}`, true);
+                    httpRequest.send();
+                }
+                else {
+                    alert('select script to view');
+                }
             });
 
+            $('.btn.remove').click(function () {
+                if (activeRow) {
+                    var scriptName = activeRow.find('td:eq(0)').text();
+                    var httpRequest = new XMLHttpRequest();
+                    httpRequest.onreadystatechange = function () {
+                        if (httpRequest.readyState === XMLHttpRequest.DONE && httpRequest.status === 200) {
+                            alert('script removed');
+                        }
+                        else if (httpRequest.readyState === XMLHttpRequest.DONE && httpRequest.status !== 200) {
+                            alert(`Status Code: ${httpRequest.status}\n Status Text: ${httpRequest.statusText}`)
+                        }
+                    };
+                    httpRequest.open('DELETE', baseUrl + `/${scriptName}`, true);
+                    httpRequest.send();
+                }
+                else {
+                    alert('select script to remove');
+                }
+            });
 
+            // Update Script
+            $('.btn.update').click(function () {
+                if (activeRow) {
+                    overwrite = true;
+                    $('.uploadFile').trigger('click');
+                }
+                else {
+                    alert('select script to update');
+                }
+            });
 
-            $('.updateFile').change(function () {
-                var currow = $(this).closest('tr');
-                var scriptName = currow.find('td:eq(0)').text();
+            // New Script
+            $('.btn.new').click(function () {
+                overwrite = false;
+                $('.uploadFile').trigger('click');
+            });
+
+            $('.uploadFile').change(function () {
                 var formData = new FormData();
                 var blob = this.files[0];
-                
-                formData.append('scriptName', scriptName);
+                if (overwrite) {
+                    var scriptName = activeRow.find('td:eq(0)').text();
+                    formData.append('scriptName', scriptName);
+                }
+
                 formData.append('script', blob);
 
                 var httpRequest = new XMLHttpRequest();
@@ -131,39 +177,30 @@
                         alert(`Status Code: ${httpRequest.status}\n Status Text: ${httpRequest.statusText}\n Message: ${httpRequest.responseText}`)
                     }
                 };
-                httpRequest.open('POST', baseUrl + '/update', true);
+                httpRequest.open('POST', `${baseUrl}/upload`, true);
                 httpRequest.send(formData);
 
             });
 
-            function arrayBufferToBase64(buffer) {
-                var binary = '';
-                var bytes = new Uint8Array(buffer);
-                var len = bytes.byteLength;
-                for (var i = 0; i < len; i++) {
-                    binary += String.fromCharCode(bytes[i]);
-                }
-                return btoa(binary);
-            }
-
-            // update
-            $('.btn.update').click(function () {
-                $myInput = $(this).closest('td').children('div:eq(0)').children('input:eq(0)')
-                $myInput.trigger('click');
+            $('.btn.refresh').click(function () {
+                document.location.reload();
             });
-            //
-            function formMultipart(fileName, content) {
-                var body = `--${BOUNDARY}
-Content-Disposition: form-data; name=\"script\"; filename=\"${fileName}\"
-Content-Type: application/javascript
-    
-    
-${content}
-    
---${BOUNDARY}--
-`;
-                return body;
-            }
+
+            // Set Row Active 
+            $(".table tbody tr").click(function () {
+                scriptName = $(this).children('td:eq(0)').text();
+                if ($(this).hasClass('active')) {
+                    $(this).removeClass('active');
+                    activeRow = undefined;
+                }
+                else {
+                    if (activeRow) {
+                        activeRow.removeClass('active');
+                    }
+                    $(this).addClass('active');
+                    activeRow = $(this);
+                }
+            });
 
         });
     </script>
