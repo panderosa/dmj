@@ -18,7 +18,7 @@ const tlsOptions = {
     cert: fs.readFileSync(path.join(`secrets/server.pem`))
 };
 
-app.use('/approval/static', express.static('./public'));
+app.use('/dm/static', express.static('./public'));
 
 app.use(morgan('tiny'));
 // support parsing of application/json type post data
@@ -31,15 +31,15 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 app.set("views", path.join("views"));
 
-app.get('/approval', (req, res) => {
+app.get('/dm', (req, res) => {
     res.send("HTTP Hello Test Passed");
 });
 
 
-app.get('/approval/javascriptstore', async (req, res) => {
+app.get('/dm/javascriptstore', async (req, res) => {
     try {
         var data = await csa.listScripts();
-        res.render('javascriptstore', { data: data, baseUrl: 'https://luca.koty.pl:3334/approval/javascriptstore' });
+        res.render('javascriptstore', { data: data, baseUrl: 'https://luca.koty.pl:3334/dm/javascriptstore' });
     }
     catch (error) {
         res.status(500).send(error);
@@ -47,18 +47,16 @@ app.get('/approval/javascriptstore', async (req, res) => {
 });
 
 // testing form in browser
-app.get('/approval/javascriptstore/update', (req, res) => {
+app.get('/dm/javascriptstore/update', (req, res) => {
     res.render('upload');
 });
 
 // multipart/form-data processed by multer
-app.post('/approval/javascriptstore/upload', upload.single('script'), async (req, res) => {
+app.post('/dm/javascriptstore/upload', upload.single('script'), async (req, res) => {
     try {
         var scriptName = req.body.scriptName || req.file.originalname;
         var overwrite = ( req.body.scriptName )? 'true': 'false';
-        var buffer = req.file.buffer; 
-        console.log(req.file);     
-        //fs.writeFileSync(`c:/tmp/output_${scriptName}`, buffer);
+        var buffer = req.file.buffer;     
         var out = await csa.updateScript(buffer,scriptName,overwrite);
         res.status(200).send('out');
     }
@@ -68,7 +66,7 @@ app.post('/approval/javascriptstore/upload', upload.single('script'), async (req
     }
 });
 
-app.delete('/approval/javascriptstore/:scriptName', async (req, res) => {
+app.delete('/dm/javascriptstore/:scriptName', async (req, res) => {
     try {
         var scriptName = req.params.scriptName;
         var scriptBody = await csa.removeScript(scriptName);
@@ -79,7 +77,7 @@ app.delete('/approval/javascriptstore/:scriptName', async (req, res) => {
     }
 });
 
-app.get('/approval/javascriptstore/:scriptName', async (req, res) => {
+app.get('/dm/javascriptstore/:scriptName', async (req, res) => {
     try {
         var scriptName = req.params.scriptName;
         var scriptBody = await csa.getScript(scriptName);
@@ -92,12 +90,12 @@ app.get('/approval/javascriptstore/:scriptName', async (req, res) => {
 
 
 
-app.get('/approval/validateCertificates', (req, res) => {
+app.get('/dm/validateCertificates', (req, res) => {
     res.render('validate');
 });
 
 // Validate OpenSSH public keys
-app.post('/approval/validateCertificates', async (req, res) => {
+app.post('/dm/validateCertificates', async (req, res) => {
     var validation;
     try {
         var dirPslab = (process.env.PSLABCERT) ? process.env.PSLABCERT : (process.platform === "win32") ? 'c:/tmp' : '/tmp';
