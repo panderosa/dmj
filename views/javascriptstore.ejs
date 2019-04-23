@@ -113,7 +113,7 @@
                             alert(`Status Code: ${httpRequest.status}\n Status Text: ${httpRequest.statusText}`)
                         }
                     };
-                    httpRequest.open('GET', baseUrl + `/${scriptName}`, true);
+                    httpRequest.open('GET', `${baseUrl}/${scriptName}`, true);
                     httpRequest.send();
                 }
                 else {
@@ -133,7 +133,7 @@
                             alert(`Status Code: ${httpRequest.status}\n Status Text: ${httpRequest.statusText}`)
                         }
                     };
-                    httpRequest.open('DELETE', baseUrl + `/${scriptName}`, true);
+                    httpRequest.open('DELETE', `${baseUrl}/${scriptName}`, true);
                     httpRequest.send();
                 }
                 else {

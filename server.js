@@ -8,8 +8,8 @@ const bodyParser = require('body-parser');
 const multer = require('multer');
 const exec = require('child_process').exec;
 const csa = require('./csa.js');
-var upload = multer({});
-const atob = require('atob');
+const upload = multer({});
+const JS_BASE_URL = process.env.JS_BASE_URL;
 
 const SSL_PORT = 3334;
 // Create secrets
@@ -39,7 +39,7 @@ app.get('/dm', (req, res) => {
 app.get('/dm/javascriptstore', async (req, res) => {
     try {
         var data = await csa.listScripts();
-        res.render('javascriptstore', { data: data, baseUrl: 'https://luca.koty.pl:3334/dm/javascriptstore' });
+        res.render('javascriptstore', { data: data, baseUrl: JS_BASE_URL });
     }
     catch (error) {
         res.status(500).send(error);
@@ -47,8 +47,8 @@ app.get('/dm/javascriptstore', async (req, res) => {
 });
 
 // testing form in browser
-app.get('/dm/javascriptstore/update', (req, res) => {
-    res.render('upload');
+app.get('/dm/javascriptstore/test', (req, res) => {
+    res.render('test');
 });
 
 // multipart/form-data processed by multer
