@@ -9,9 +9,9 @@ const multer = require('multer');
 const exec = require('child_process').exec;
 const csa = require('./csa.js');
 const upload = multer({});
-const DMJ_PATH = '/dupek'; //process.env.DMJ_PATH;
-const DMJ_PORT = 3333; //process.env.DMJ_PORT;
-const DMJ_HOST = 'luca.koty.pl'; // process.env.DMJ_HOST;
+const DMJ_PATH = process.env.DMJ_PATH || '/dmj';
+const DMJ_PORT = process.env.DMJ_PORT || 3334;
+const DMJ_HOST = process.env.DMJ_HOST || 'localhost';
 const BASE_URL = `https://${DMJ_HOST}:${DMJ_PORT}${DMJ_PATH}`;
 
 // Create secrets
@@ -86,4 +86,3 @@ app.get(`${DMJ_PATH}/:scriptName`, async (req, res) => {
 });
 
 https.createServer(tlsOptions, app).listen(DMJ_PORT, () => console.log(`Starting HTTPS server at port ${DMJ_PORT}`));
-
