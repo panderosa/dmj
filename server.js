@@ -9,16 +9,18 @@ const multer = require('multer');
 const exec = require('child_process').exec;
 const csa = require('./csa.js');
 const upload = multer({});
-const JS_BASE_URL = process.env.JS_BASE_URL;
+const DMJ_PATH = '/dupek'; //process.env.DMJ_PATH;
+const DMJ_PORT = 3333; //process.env.DMJ_PORT;
+const DMJ_HOST = 'luca.koty.pl'; // process.env.DMJ_HOST;
+const BASE_URL = `https://${DMJ_HOST}:${DMJ_PORT}${DMJ_PATH}`;
 
-const SSL_PORT = 3334;
 // Create secrets
 const tlsOptions = {
     key: fs.readFileSync(path.join(`secrets/key.pem`)),
     cert: fs.readFileSync(path.join(`secrets/server.pem`))
 };
 
-app.use('/dm/static', express.static('./public'));
+app.use(`${DMJ_PATH}/static`, express.static('./public'));
 
 app.use(morgan('tiny'));
 // support parsing of application/json type post data
@@ -31,15 +33,10 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 app.set("views", path.join("views"));
 
-app.get('/dm', (req, res) => {
-    res.send("HTTP Hello Test Passed");
-});
-
-
-app.get('/dm/javascriptstore', async (req, res) => {
+app.get(`${DMJ_PATH}`, async (req, res) => {
     try {
         var data = await csa.listScripts();
-        res.render('javascriptstore', { data: data, baseUrl: JS_BASE_URL });
+        res.render('javascriptstore', { data: data, DMJ_PATH: DMJ_PATH, baseUrl: BASE_URL });
     }
     catch (error) {
         res.status(500).send(error);
@@ -47,12 +44,12 @@ app.get('/dm/javascriptstore', async (req, res) => {
 });
 
 // testing form in browser
-app.get('/dm/javascriptstore/test', (req, res) => {
+app.get(`${DMJ_PATH}/test`, (req, res) => {
     res.render('test');
 });
 
 // multipart/form-data processed by multer
-app.post('/dm/javascriptstore/upload', upload.single('script'), async (req, res) => {
+app.post(`${DMJ_PATH}/upload`, upload.single('script'), async (req, res) => {
     try {
         var scriptName = req.body.scriptName || req.file.originalname;
         var overwrite = ( req.body.scriptName )? 'true': 'false';
@@ -66,7 +63,7 @@ app.post('/dm/javascriptstore/upload', upload.single('script'), async (req, res)
     }
 });
 
-app.delete('/dm/javascriptstore/:scriptName', async (req, res) => {
+app.delete(`${DMJ_PATH}/:scriptName`, async (req, res) => {
     try {
         var scriptName = req.params.scriptName;
         var scriptBody = await csa.removeScript(scriptName);
@@ -77,7 +74,7 @@ app.delete('/dm/javascriptstore/:scriptName', async (req, res) => {
     }
 });
 
-app.get('/dm/javascriptstore/:scriptName', async (req, res) => {
+app.get(`${DMJ_PATH}/:scriptName`, async (req, res) => {
     try {
         var scriptName = req.params.scriptName;
         var scriptBody = await csa.getScript(scriptName);
@@ -88,51 +85,5 @@ app.get('/dm/javascriptstore/:scriptName', async (req, res) => {
     }
 });
 
-
-
-app.get('/dm/validateCertificates', (req, res) => {
-    res.render('validate');
-});
-
-// Validate OpenSSH public keys
-app.post('/dm/validateCertificates', async (req, res) => {
-    var validation;
-    try {
-        var dirPslab = (process.env.PSLABCERT) ? process.env.PSLABCERT : (process.platform === "win32") ? 'c:/tmp' : '/tmp';
-        var certs = req.body.certificates;
-        var file = path.join(dirPslab, `tmp_${Date.now()}.crt`);
-        fs.writeFileSync(file, certs);
-        validation = await runValidation(file);
-    }
-    catch (error) {
-        console.log(`ERROR: ${error}`);
-        validation = {
-            'status': 'ERROR',
-            'message': 'Key Validation Failed'
-        }
-    }
-    res.json(validation);
-});
-
-async function runValidation(file) {
-    return new Promise((resolve, reject) => {
-        var runscript = exec(`ssh-keygen -l -v -f ${file}`, (error, stdout, stderr) => {
-            if (error) {
-                reject(error);
-            }
-            else {
-                console.log(`STDOUT: ${stdout}`);
-                console.log(`STDERR: ${stderr}`);
-                resolve({
-                    'status': 'OK',
-                    'message': 'Key Validation Passed'
-                });
-            }
-        });
-    });
-}
-
-//app.listen(3333,() => console.log("Starting server at port 3333"));
-
-https.createServer(tlsOptions, app).listen(SSL_PORT, () => console.log(`Starting HTTPS server at port ${SSL_PORT}`));
+https.createServer(tlsOptions, app).listen(DMJ_PORT, () => console.log(`Starting HTTPS server at port ${DMJ_PORT}`));
 
