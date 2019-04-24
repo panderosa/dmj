@@ -86,11 +86,11 @@
             </tbody>
         </table>
     </div>
-    <script type="text/javascript" src="<%= DMJ_PATH%>/static/scripts/jquery-3.4.0.slim.min.js"></script>
-    <script type="text/javascript" src="<%= DMJ_PATH%>/static/scripts/jquery.floatThead.min.js"></script>
+    <script type="text/javascript" src="/<%= DMJ_HREF%>/static/scripts/jquery-3.4.0.slim.min.js"></script>
+    <script type="text/javascript" src="/<%= DMJ_HREF%>/static/scripts/jquery.floatThead.min.js"></script>
     <script>
         $(document).ready(() => {
-            const baseUrl = '<%= baseUrl%>';
+            const baseUrl = '<%= BASE_URL%>';
             let activeRow;
             let overwrite; // true for updating or false for new
             // scroll table

@@ -9,10 +9,15 @@ const multer = require('multer');
 const exec = require('child_process').exec;
 const csa = require('./csa.js');
 const upload = multer({});
-const DMJ_PATH = process.env.DMJ_PATH || '/dmj';
-const DMJ_PORT = process.env.DMJ_PORT || 3334;
-const DMJ_HOST = process.env.DMJ_HOST || 'localhost';
-const BASE_URL = `https://${DMJ_HOST}:${DMJ_PORT}${DMJ_PATH}`;
+const DMJ_HREF = process.env['DMJ_HREF'] || 'dmj';
+const DMJ_PORT = process.env['DMJ_PORT'] || 3334;
+const DMJ_HOST = process.env['DMJ_HOST'] || 'localhost';
+const BASE_URL = `https://${DMJ_HOST}:${DMJ_PORT}/${DMJ_HREF}`;
+
+console.log(`DMJ_HREF = ${DMJ_HREF}`);
+console.log(`DMJ_PORT = ${DMJ_PORT}`);
+console.log(`DMJ_HOST = ${DMJ_HOST}`);
+console.log(`BASE_URL = ${BASE_URL}`);
 
 // Create secrets
 const tlsOptions = {
@@ -20,7 +25,7 @@ const tlsOptions = {
     cert: fs.readFileSync(path.join(`secrets/server.pem`))
 };
 
-app.use(`${DMJ_PATH}/static`, express.static('./public'));
+app.use(`/${DMJ_HREF}/static`, express.static('./public'));
 
 app.use(morgan('tiny'));
 // support parsing of application/json type post data
@@ -33,10 +38,10 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 app.set("views", path.join("views"));
 
-app.get(`${DMJ_PATH}`, async (req, res) => {
+app.get(`/${DMJ_HREF}`, async (req, res) => {
     try {
         var data = await csa.listScripts();
-        res.render('javascriptstore', { data: data, DMJ_PATH: DMJ_PATH, baseUrl: BASE_URL });
+        res.render('javascriptstore', { data: data, DMJ_HREF: DMJ_HREF, BASE_URL: BASE_URL });
     }
     catch (error) {
         res.status(500).send(error);
@@ -44,12 +49,12 @@ app.get(`${DMJ_PATH}`, async (req, res) => {
 });
 
 // testing form in browser
-app.get(`${DMJ_PATH}/test`, (req, res) => {
+app.get(`/${DMJ_HREF}/test`, (req, res) => {
     res.render('test');
 });
 
 // multipart/form-data processed by multer
-app.post(`${DMJ_PATH}/upload`, upload.single('script'), async (req, res) => {
+app.post(`/${DMJ_HREF}/upload`, upload.single('script'), async (req, res) => {
     try {
         var scriptName = req.body.scriptName || req.file.originalname;
         var overwrite = ( req.body.scriptName )? 'true': 'false';
@@ -63,7 +68,7 @@ app.post(`${DMJ_PATH}/upload`, upload.single('script'), async (req, res) => {
     }
 });
 
-app.delete(`${DMJ_PATH}/:scriptName`, async (req, res) => {
+app.delete(`/${DMJ_HREF}/:scriptName`, async (req, res) => {
     try {
         var scriptName = req.params.scriptName;
         var scriptBody = await csa.removeScript(scriptName);
@@ -74,7 +79,7 @@ app.delete(`${DMJ_PATH}/:scriptName`, async (req, res) => {
     }
 });
 
-app.get(`${DMJ_PATH}/:scriptName`, async (req, res) => {
+app.get(`/${DMJ_HREF}/:scriptName`, async (req, res) => {
     try {
         var scriptName = req.params.scriptName;
         var scriptBody = await csa.getScript(scriptName);
